@@ -62,7 +62,7 @@ function stateReducer (a:Action, state:State):[State, Action] {
         
         case ActionType.NextNum:
             const nextNum = numGen(0, state.maxVal);
-            const classification = recudeRanges(nextNum, state.ranges);
+            const classification = reduceRanges(nextNum, state.ranges);
             console.log(`${nextNum} => Enclosed by ${classification} range(s)`);
             return [ state,  { type: ActionType.NextNum } ];
 
@@ -81,7 +81,7 @@ class StateStore {
     public getState():State { return this.state; }
     public updateState(newState:State):void { this.state = newState; }
     public clearActions():void { this.queue = <List<Action>>List(); }
-    public hasActions():number { return this.queue.count(); }
+    public hasActions():boolean { return this.queue.count() > 0; }
     public pushAction(newAction:Action):void { this.queue = this.queue.push(newAction); }
     public popAction():Action {
         const first:Action = this.queue.first();
@@ -117,7 +117,7 @@ function main(argv) {
 };
 
 function run() {
-    if(!stateStore.getState().quit && stateStore.hasActions() > 0) {
+    if(!stateStore.getState().quit && stateStore.hasActions()) {
         let newState, nextAction;
 
         // Reduce by action, update state store and action queue
@@ -160,7 +160,7 @@ function rangeGen(n:number, maxVal:number):List<MyRange> {
 }
 
 // Find in how many ranges a number is included in
-function recudeRanges(testNum:number, ranges:List<MyRange>):number {
+function reduceRanges(testNum:number, ranges:List<MyRange>):number {
     return ranges.reduce((v, r) => numInRange(testNum, r) ? v + 1 : v , 0);
 }
 
