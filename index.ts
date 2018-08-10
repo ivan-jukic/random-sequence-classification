@@ -73,45 +73,66 @@ function stateReducer (a:Action, state:State):[State, Action] {
 }
 
 
+/* State store */
+
+class StateStore {
+    private state:State = new State();
+    private queue:List<Action> = <List<Action>>List();
+    public getState():State { return this.state; }
+    public updateState(newState:State):void { this.state = newState; }
+    public hasActions():number { return this.queue.count(); }
+    public pushAction(newAction:Action):void { this.queue = this.queue.push(newAction); }
+    public popAction():Action {
+        const first:Action = this.queue.first();
+        this.queue = this.queue.delete(0);
+        return first;
+    }
+}
+
+// Init store
+const stateStore:StateStore = new StateStore();
+
+
 /* Main, program entry point */
 
-(function() {
-    const n:number|undefined = Number(process.argv[2]) || undefined;
+(function() { main(process.argv); })();
 
-    // App state, held in a single mutable variable (state store).
-    // State itself is immutable, new state instance will replace the old one.
-    let state = new State();
+function main(argv) {
+    const n:number|undefined = Number(argv[2]) || undefined;
 
     // Actions queue, actions are added to it and executed in squence.
-    let actionQueue:List<Action> = <List<Action>>List().push({ type: ActionType.Init, num: n });   
+    stateStore.pushAction({ type: ActionType.Init, num: n });
 
     process.stdin.setRawMode(true);
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', key => {
         if (key == 'q') {
             // Clear action queue and proceed with cleanup
-            actionQueue = <List<Action>>List().push({ type: ActionType.Quit });
+            stateStore.pushAction({ type: ActionType.Quit });
         }
     });
 
-    (function run():void {
-        if(!state.quit && actionQueue.count() > 0) {
-            let nextAction;
+    run();
+};
 
-            // Reduce by action, update state store and action queue
-            [ state, nextAction ] = stateReducer(actionQueue.first(), state);
-            
-            actionQueue = actionQueue.delete(0).push(nextAction);
+function run():void {
+    if(!stateStore.getState().quit && stateStore.hasActions() > 0) {
+        let newState, nextAction;
 
-            // Make it tiny bit async, to be able to capture keyboard input.
-            setTimeout(run);
-        }
+        // Reduce by action, update state store and action queue
+        [ newState, nextAction ] = stateReducer(stateStore.popAction(), stateStore.getState());
+        
+        stateStore.updateState(newState);
+        stateStore.pushAction(nextAction);
 
-        if(state.quit) {
-            process.exit(0);
-        }
-    })();
-})();
+        // Make it tiny bit async, to be able to capture keyboard input.
+        setTimeout(run);
+    }
+
+    if(stateStore.getState().quit) {
+        process.exit(0);
+    }
+}
 
 
 /* Implementation functions, can easily be tested. */
