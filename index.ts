@@ -80,6 +80,7 @@ class StateStore {
     private queue:List<Action> = <List<Action>>List();
     public getState():State { return this.state; }
     public updateState(newState:State):void { this.state = newState; }
+    public clearActions():void { this.queue = <List<Action>>List(); }
     public hasActions():number { return this.queue.count(); }
     public pushAction(newAction:Action):void { this.queue = this.queue.push(newAction); }
     public popAction():Action {
@@ -100,14 +101,14 @@ const stateStore:StateStore = new StateStore();
 function main(argv) {
     const n:number|undefined = Number(argv[2]) || undefined;
 
-    // Actions queue, actions are added to it and executed in squence.
+    // Init action
     stateStore.pushAction({ type: ActionType.Init, num: n });
 
     process.stdin.setRawMode(true);
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', key => {
         if (key == 'q') {
-            // Clear action queue and proceed with cleanup
+            stateStore.clearActions();
             stateStore.pushAction({ type: ActionType.Quit });
         }
     });
@@ -115,7 +116,7 @@ function main(argv) {
     run();
 };
 
-function run():void {
+function run() {
     if(!stateStore.getState().quit && stateStore.hasActions() > 0) {
         let newState, nextAction;
 
