@@ -55,7 +55,7 @@ function stateReducer (a:Action, state:State):[State, Action] {
         case ActionType.NoOp:
             return [ state, { type: ActionType.NoOp } ];
 
-        case 'init':
+        case ActionType.Init:
             const n = a.num || state.n;
             const ranges = rangeGen(n, state.maxVal);
             return [ <State>state.merge({n, ranges}), { type: ActionType.NextNum } ];
